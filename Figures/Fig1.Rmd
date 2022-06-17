@@ -1,0 +1,263 @@
+---
+title: "Fig1"
+author: "Regan"
+date: "17/01/2022"
+---
+
+# Load sce and set directory
+```{r}
+sce <- readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/scRNAseq/EAE/All Cremato/EAE_202X/4_finalAnnotations/sce.RDS")
+dirA <- "/Users/reganhamel/Documents/PhD/Publications/202X Metabo/Figures/Fig1/"
+```
+
+
+#Fig 1B UMAP by condition
+```{r}
+library(scater)
+library(Seurat)
+
+plotUMAP(sce, colour_by="Cluster") 
+ggsave(filename = paste0("Cluster_UMAP_legend.pdf"), path = dirA, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+
+p <- plotUMAP(sce, colour_by="Cluster") 
+
+AugmentPlot(plot=p, dpi=600)
+ggsave(filename = paste0("Cluster_UMAP.pdf"), path = dirA, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+```
+
+#Fig 1B column/barplot of cell type per cluster
+```{r}
+sce$fl_condition <- paste0(sce$fl, "_", sce$condition)
+sce$fl_condition <- factor(sce$fl_condition, levels=c("Ctrl", "Resident_Ctrl", "Infiltrating_Peak", "Resident_Peak", "Infiltrating_Chronic", "Resident_Chronic"))
+sce$fl_condition[sce$fl_condition == "Resident_Ctrl"] <- "Ctrl"
+sce$condition <- factor(sce$condition, levels=c("Ctrl", "Peak", "Chronic"))
+table(sce$fl_condition)
+```
+
+#barplots condition/cell type 
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# set the x and y values for the plot
+y <- droplevels(factor(sce$cell_type))
+x <- droplevels(factor(sce$condition))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+#data$cluster <- factor(data$cluster, levels=c("Ctrl", "Infiltrating_Peak", "Resident_Peak", "Infiltrating_Chronic", "Resident_Chronic"))
+data$cluster <- factor(data$cluster, levels=c("Ctrl", "Peak", "Chronic"))
+#data$group <- factor(data$group, levels=rev(levels(factor(sce$cell_type))))
+#data$cluster <- factor(data$cluster, levels=1:nlevels(sce$Cluster))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "cellType_condition_barplot.pdf"), height=5, width=3)
+```
+
+
+#Fig 1C UMAP by Cluster
+```{r}
+library(scater)
+library(Seurat)
+
+plotUMAP(sce, colour_by="condition") 
+ggsave(filename = paste0("condition_UMAP_legend.pdf"), path = dirA, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+
+p <- plotUMAP(sce, colour_by="condition") 
+
+AugmentPlot(plot=p, dpi=600)
+ggsave(filename = paste0("condition_UMAP.pdf"), path = dirA, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+```
+
+#Fig 1C barplot condition stage vs cluster
+```{r}
+sce$stage_condition[sce$stage_condition == "peak_Ctrl" | sce$stage_condition == "chronic_Ctrl"] <- "Ctrl"
+table(sce$stage_condition)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+#sce$condition <- as.character(sce$condition)
+#sce$condition[sce$condition == "Ctrl"] <- " ctrl"
+#sce$condition[sce$condition == "peak"] <- " peak"
+
+# set the x and y values for the plot
+y <- droplevels(factor(sce$cell_type))
+x <- droplevels(factor(sce$condition))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+data$cluster <- factor(data$cluster, levels=c("Ctrl", "Peak", "Chronic"))#factor(data$cluster, levels=c("Ctrl", "Infiltrating_peak", "Resident_peak", "Infiltrating_chronic", "Resident_chronic"))
+data$group <- factor(data$group, levels=rev(levels(factor(sce$cell_type))))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "cluster_condition_barplot.pdf"), height=5, width=3)
+```
+
+# Fig 1D: subclustered UMAPs for subcluster 4
+```{r}
+subsce_all <- readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/scRNAseq/EAE/All Cremato/EAE_202X/6_subClustering/sce_subclustered.RDS")
+```
+
+```{r}
+library(scater)
+library(Seurat)
+col <- "subcluster"
+
+subsce <- subsce_all[[1]] # subcluster 4
+
+p = plotUMAP(subsce, colour_by=col)
+
+AugmentPlot(plot=p, width =5, height = 5, dpi=600)  #+ geom_point(aes(fill=colData(sce)["complex1_logs"][,1]), pch=21, stroke = .0, alpha = 0.6, size=2)
+ggsave(filename = paste0(col, "_vectorFriendly.pdf"), path = file.path(dirA, "Cluster4"), scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+```
+
+
+# Fig 1F: GO bar plots of select GO terms for subcluster 4
+```{r}
+library(stringr)
+
+dirH <- "/Users/reganhamel/Documents/PhD/Publications/202X Metabo/Figures/Fig1/Cluster4/DEGs/GO/"
+clust <- levels(factor(subsce$subcluster))
+
+clusters <- NULL
+for(i in clust) {
+  input <- NULL
+  try(input <- read.table(paste0(dirH,i, ".txt"), header = TRUE, sep ="\t", skip = 11))
+  if(!is.null(input)) {
+    name <- paste0("clust", i)
+    clusters <- c(clusters, name) 
+    assign(name, input)
+    input <- NULL
+    
+  }
+  input <- NULL
+}
+
+
+#extract just the GO and fold enrichment from each cluster & write as csv
+all <- NULL
+for(i in clusters) {
+  input <- eval(parse(text=i))
+  GO <- as.character(input$GO.biological.process.complete) 
+  FDR <- input[,grep("*FDR*", names(input))]
+  FE <- input[,grep("*Enrichment*", names(input))]
+  FE <- str_remove(FE, "> ")
+  FE <- str_remove(FE, "< ")
+  FE <- trimws(FE, which = "b", whitespace = "[ \t\r\n]")
+  FE <- as.numeric(FE)
+  Clust <- rep(i, length(FE))
+  GO_FE <- cbind(GO, FE, FDR, Clust)
+  all <- rbind(all, GO_FE)
+  assign(paste0("GO_FE_", i), GO_FE)
+  
+  write.csv(GO_FE, paste0(dirH, i, "_lim.csv" ))
+  
+}
+```
+
+read the saved csv of interest
+```{r}
+clusterToPlot <- "clust4.1_lim"
+data <- read.csv(paste0(dirH, clusterToPlot, ".csv"), blank.lines.skip=T)
+data$nlog_FDR <- -log2(as.numeric(data$FDR))
+data$logFE <- log2(as.numeric(data$FE))
+#data$GO <- gsub(" \\(.*", "", data$GO)
+
+
+#plot GO as a barplot (top30)
+data <- data[1:4,]
+
+pdf(file = paste0(dirH, clusterToPlot, ".pdf"), width = 6, height =2)
+# Increase margin size
+par(mar=c(4,20,0,0.5))
+
+# font size
+f = 0.5
+x <- rev(data$nlog_FDR[order(data$FE)])
+y <- rev(data$GO[order(data$FE)])
+
+
+y=barplot(data$FE, names.arg = data$GO, horiz=T, las = 1, xlab = "Fold Enrichment", cex.names=f, cex.axis=f, col = "#99C1E8", xlim=c(0, max(data$FE)+0.5))
+points(x, y, pch=20, cex=1)
+
+dev.off()
+
+```
+
+# Fig 1G: subclustered UMAPs for subcluster 4
+```{r}
+dirT <- "/Users/reganhamel/Documents/PhD/Publications/202X Metabo/Figures/Fig1/Cluster4/Complex_Genes/"
+```
+
+#calculate complexI genes
+```{r}
+source("/Users/reganhamel/Documents/PhD/scRNAseq Workflow/Gene Lists/Complex Genes/Complex Genes.R")
+
+genes <-  Complex2
+names(genes)
+list <- names(genes)
+
+input <- c(strsplit(genes, " "))
+input <- input[[1]]
+input <- trimws(input, which = "b", whitespace = "[ \t\r\n]")
+input <- input[input != ""]
+
+input <- input[which(input %in% rownames(subsce))]
+input
+
+subsce$complex_logs <- colMedians(as.matrix(logcounts(subsce[input])))
+
+# plotUMAP
+
+plotUMAP(subsce, colour_by="complex_logs")
+ggsave(filename = paste0(names(genes),"_MedianLogs_legend.pdf"), path = dirT, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+
+p <- plotUMAP(subsce, colour_by="complex_logs")
+AugmentPlot(plot=p, dpi=600)  #+ geom_point(aes(fill=colData(x)[c.by][,1]), pch=21, stroke = .0, alpha = 0.6, size=1)
+ggsave(filename = paste0(names(genes),"_MedianLogs.pdf"), path = dirT, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+```
+
+
+
+
