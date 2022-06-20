@@ -1,0 +1,67 @@
+---
+title: "SFig11"
+author: "Regan"
+date: '2022-06-20'
+---
+
+# Fig S11A small molecules UMAP
+```{r}
+cytSm <-readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/CyTOF/treatment_debarcoded_files/05.04.2022/2_Anno100/LucaAnno/sce.RDS")
+dirA <- "/Users/reganhamel/Documents/PhD/Publications/202X Metabo/Figures/FigS11/"
+```
+
+```{r}
+library(scater)
+plotUMAP(cytSm, colour_by="meta20", text_by="meta20")
+ggsave(paste0(dirA, "UMAP_meta20.png"))
+```
+
+```{r}
+library(Seurat)
+col <- "cell_type"
+
+p = plotUMAP(cytSm, colour_by=col)
+
+AugmentPlot(plot=p, width =5, height = 5, dpi=600)  #+ geom_point(aes(fill=colData(sce)["complex1_logs"][,1]), pch=21, stroke = .0, alpha = 0.6, size=2)
+ggsave(filename = paste0(col, "_vectorFriendly.pdf"), path = dirA, scale = 1, width = 5, height = 5, dpi = 300, limitsize = TRUE)
+```
+
+# Fig S11B small molecules stacked barchart
+```{r}
+library(scater)
+library(dplyr)
+library(ggplot2)
+x_name <- "condition"
+y_name <- "cell_type"
+
+# set the x and y values for the plot
+y <- droplevels(factor(colData(cytSm)[,y_name]))
+x <- droplevels(factor(colData(cytSm)[,x_name]))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+#data$cluster <- factor(data$cluster, levels=1:nlevels(x))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "barplot_", x_name,"_", y_name, ".pdf"), height=5, width=5)
+```
+

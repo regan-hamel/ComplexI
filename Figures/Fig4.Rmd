@@ -1,0 +1,145 @@
+---
+title: "Fig 4"
+author: "Regan"
+date: '2022-03-10'
+---
+
+# load sce and directory
+```{r}
+sce <- readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/scRNAseq/EAE/ND6/3_Annotations/sce.RDS")
+dirA <- "/Users/reganhamel/Documents/PhD/Publications/202X Metabo/Figures/Fig4/"
+```
+
+
+# Fig 4B percent stacked barcharts
+```{r}
+library(dplyr)
+library(ggplot2)
+x_name <- "condition"
+y_name <- "Cluster"
+
+# set the x and y values for the plot
+y <- droplevels(factor(colData(sce)[,y_name]))
+x <- droplevels(factor(colData(sce)[,x_name]))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+#data$cluster <- factor(data$cluster, levels=1:nlevels(x))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "barplot", x_name,"_", y_name, ".pdf"), height=5, width=5)
+```
+
+# Fig 4C
+```{r}
+
+```
+
+
+# Fig 4F CYTOF percent stacked barcharts
+```{r}
+cyt <- readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/CyTOF/ndufs4_debarcoded_files/Combined lymphoid, myeloid/2_Anno100/sce.RDS")
+```
+
+cell types in WT vs KO - percent stacked barchart
+```{r}
+library(scater)
+library(dplyr)
+library(ggplot2)
+x_name <- "condition"
+y_name <- "cell_type"
+
+# set the x and y values for the plot
+y <- droplevels(factor(colData(cyt)[,y_name]))
+x <- droplevels(factor(colData(cyt)[,x_name]))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+#data$cluster <- factor(data$cluster, levels=1:nlevels(x))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "barplot_", x_name,"_", y_name, ".pdf"), height=5, width=5)
+```
+
+# Fig 4N CYTOF percent stacked barcharts
+```{r}
+cytSm <-readRDS("/Users/reganhamel/Documents/PhD/Publications/202X Metabo/CyTOF/treatment_debarcoded_files/05.04.2022/2_Anno100/LucaAnno/sce.RDS")
+
+```
+
+cell types in conditions - percent stacked barchart
+```{r}
+library(scater)
+library(dplyr)
+library(ggplot2)
+x_name <- "condition"
+y_name <- "cell_type"
+
+# set the x and y values for the plot
+y <- droplevels(factor(colData(cytSm)[,y_name]))
+x <- droplevels(factor(colData(cytSm)[,x_name]))
+
+# create the df containing the x and y values
+df <- as.data.frame(table(y, x))
+colnames(df) <- c("y", "x", "Freq")
+
+# create data
+cluster <- (levels(df$x)[df$x]) # x Axis
+value <- as.numeric(df$Freq)             # y Axis
+group <- df$y       # group, one shape per group
+data <- data.frame(cluster, value, group)
+
+
+# plot
+# Compute percentages with dplyr
+data <- data  %>%
+  group_by(cluster, group) %>%
+  summarise(n = sum(value)) %>%
+  mutate(percentage = n / sum(n))
+
+#reorder levels
+#data$cluster <- factor(data$cluster, levels=1:nlevels(x))
+
+# Plot
+ggplot(data, aes(x=cluster, y=percentage, fill=group)) + 
+  geom_col(alpha=0.7 , size=0.5, colour="black") + ylab("Fraction of Cells") + theme_minimal() +theme(axis.text.x = element_text(angle = 45, hjust=1)) + xlab(NULL)
+ggsave(paste0(dirA, "barplot_", x_name,"_", y_name, ".pdf"), height=5, width=5)
+```
